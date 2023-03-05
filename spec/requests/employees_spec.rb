@@ -12,7 +12,7 @@ require 'rails_helper'
 # of tools you can use to make these specs even more expressive, but we're
 # sticking to rails and rspec-rails APIs to keep things simple and stable.
 
-RSpec.describe "/employees", type: :request do
+RSpec.describe "/employees" do
   # This should return the minimal set of attributes required to create a valid
   # Employee. As you add validations to Employee, be sure to
   # adjust the attributes here as well.
@@ -46,20 +46,22 @@ RSpec.describe "/employees", type: :request do
         get '/employees', headers: valid_headers, as: :json
         expect(response).to be_successful
         expect(response.content_type).to eq("application/json; charset=utf-8")
-        expect(JSON.parse(response.body).map { |e| e["id"] }).to eq(employees[100...200].map(&:id).reverse)
+        expect(response.parsed_body.pluck("id")).to eq(employees[100...200].map(&:id).reverse)
       end
+
       it "returns the first 100 employees in descending order on page 2" do
         # Employee.create! valid_attributes
         get '/employees?page=2', headers: valid_headers, as: :json
         expect(response).to be_successful
         expect(response.content_type).to eq("application/json; charset=utf-8")
-        expect(JSON.parse(response.body).map { |e| e["id"] }).to eq(employees[0...100].map(&:id).reverse)
+        expect(response.parsed_body.pluck("id")).to eq(employees[0...100].map(&:id).reverse)
       end
     end
   end
 
   describe "GET /show" do
     let!(:employee) { create(:employee) }
+
     it "renders a successful response" do
       get employee_url(employee), as: :json
       expect(response).to be_successful
@@ -81,7 +83,7 @@ RSpec.describe "/employees", type: :request do
         expect {
           post employees_url,
                params: { employee: invalid_attributes }, as: :json
-        }.to change(Employee, :count).by(0)
+        }.not_to change(Employee, :count)
       end
 
       it "renders a JSON response with errors for the new employee" do
